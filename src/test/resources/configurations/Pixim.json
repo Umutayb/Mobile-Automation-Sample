@@ -1,0 +1,7 @@
+{
+  "platformName": "Android",
+  "platformVersion": "11",
+  "deviceName": "Pixim",
+  "automationName": "Appium",
+  "app": "src/test/resources/apps/sampleGetir.apk"
+}

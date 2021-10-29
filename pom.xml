@@ -10,10 +10,10 @@
     <url>https://github.com/Umutayb/Web-Automation-Sample-Cucumber</url>
 
     <properties>
-        <browser>Chrome</browser>
+        <device>Pixim</device>
         <name>${project.name}</name>
         <cucumber.version>4.8.0</cucumber.version>
-        <framework.version>0.5.4</framework.version>
+        <framework.version>0.0.1</framework.version>
         <maven.surefire.version>2.22.1</maven.surefire.version>
     </properties>
 
@@ -21,7 +21,7 @@
         <!-- Framework -->
         <dependency>
             <groupId>com.github.Umutayb</groupId>
-            <artifactId>Pickleib</artifactId>
+            <artifactId>Mobileib</artifactId>
             <version>${framework.version}</version>
         </dependency>
 
