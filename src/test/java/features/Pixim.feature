@@ -1,5 +1,5 @@
 @Pixim
 Feature: Appium Exploration
-
   Scenario: Launch app
-    * Wait 30 seconds
+    * Click landing next button
+    * Wait 3 seconds

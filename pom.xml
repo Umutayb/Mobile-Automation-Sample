@@ -13,7 +13,7 @@
         <device>Pixim</device>
         <name>${project.name}</name>
         <cucumber.version>4.8.0</cucumber.version>
-        <framework.version>0.0.1</framework.version>
+        <framework.version>0.3.5</framework.version>
         <maven.surefire.version>2.22.1</maven.surefire.version>
     </properties>
 
@@ -28,95 +28,12 @@
         <!-- Framework as jar
         <dependency>
             <groupId>bora</groupId>
-            <artifactId>POM-Framework-${framework.version}.jar</artifactId>
+            <artifactId>Mobileib-${framework.version}.jar</artifactId>
             <version>${framework.version}</version>
-            <systemPath>${project.basedir}/lib/POM-FRAMEWORK-${framework.version}.jar</systemPath>
+            <systemPath>${project.basedir}/lib/Mobileib-${framework.version}.jar</systemPath>
             <scope>system</scope>
             <type>jar</type>
-        </dependency>
-        -->
-
-        <!-- Selenium -->
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>3.11.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>htmlunit-driver</artifactId>
-            <version>2.20</version>
-        </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-api</artifactId>
-            <version>3.141.59</version>
-        </dependency>
-
-        <!-- Appium -->
-        <dependency>
-            <groupId>io.appium</groupId>
-            <artifactId>java-client</artifactId>
-            <version>7.5.1</version>
-        </dependency>
-
-        <!-- JUnit -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Commons -->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>20030203.000550</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- REST Assured -->
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <version>4.4.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Jackson Databind -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.12.4</version>
-        </dependency>
-
-        <!-- HTTP Components -->
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.13</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Google Simple Json -->
-        <dependency>
-            <groupId>com.googlecode.json-simple</groupId>
-            <artifactId>json-simple</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-
-        <!-- Javax Mail -->
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>javax.mail-api</artifactId>
-            <version>1.6.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>javax.mail</artifactId>
-            <version>1.6.2</version>
-        </dependency>
+        </dependency>-->
 
         <!-- Cucumber -->
         <dependency>
@@ -154,12 +71,87 @@
             <version>1.1.14</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-core</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Appium -->
+        <dependency>
+            <groupId>io.appium</groupId>
+            <artifactId>java-client</artifactId>
+            <version>7.6.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Commons -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>20030203.000550</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- REST Assured -->
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <version>4.4.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Jackson Databind -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.13.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- HTTP Components -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Google Simple Json -->
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Javax Mail -->
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>javax.mail-api</artifactId>
+            <version>1.6.2</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <version>1.6.2</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- Web Driver Manager -->
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <version>5.0.2</version>
+        </dependency>
 
         <!-- Assert -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.17.2</version>
+            <version>3.21.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -168,6 +160,13 @@
             <groupId>com.github.webdriverextensions</groupId>
             <artifactId>webdriverextensions</artifactId>
             <version>3.11.2</version>
+        </dependency>
+
+        <!-- Json-->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20210307</version>
         </dependency>
 
     </dependencies>
@@ -184,6 +183,11 @@
             <id>central</id>
             <name>bintray</name>
             <url>https://jcenter.bintray.com</url>
+        </repository>
+        <repository>
+            <id>maven_central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2/</url>
         </repository>
     </repositories>
 

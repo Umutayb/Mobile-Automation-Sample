@@ -1,9 +1,7 @@
 utils/driver/Driver.class
-resources/api/APILibrary.class
 utils/Printer.class
 utils/JsonUtilities.class
 utils/NumericUtilities.class
-utils/TerminalUtils.class
 utils/FileUtilities.class
 utils/ApiUtilities.class
 utils/driver/DriverFactory.class
@@ -11,11 +9,15 @@ utils/Utilities.class
 utils/Printer$success.class
 resources/Database.class
 utils/Printer$info.class
+utils/EmailUtilities$1.class
 utils/PropertiesReader.class
+utils/XPathUtilities.class
+resources/Capabilities.class
 utils/Printer$important.class
 utils/Printer$error.class
+utils/TerminalUtilities.class
 utils/Printer$warning.class
-utils/driver/Initialize.class
+utils/EmailUtilities.class
 utils/TextParser.class
 resources/Colors.class
 utils/StringUtilities.class
