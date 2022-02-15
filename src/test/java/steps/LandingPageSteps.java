@@ -1,10 +1,7 @@
 package steps;
 
 import io.cucumber.java.en.Then;
-import org.testng.annotations.BeforeMethod;
 import pages.LandingPage;
-
-import java.lang.reflect.Method;
 
 public class LandingPageSteps {
     LandingPage landingPage = new LandingPage();
