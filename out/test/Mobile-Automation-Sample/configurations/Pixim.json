@@ -2,6 +2,6 @@
   "platformName": "Android",
   "platformVersion": "11",
   "deviceName": "Pixim",
-  "automationName": "Appium",
+  "automationName": "uiautomator2",
   "app": "/Users/Ay/Github/Mobile-Automation-Sample/src/test/resources/apps/sampleGetir.apk"
 }
