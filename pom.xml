@@ -13,7 +13,7 @@
     <properties>
         <device>Pixim</device>
         <name>${project.name}</name>
-        <mobile.ui.framework.version>0.5.1</mobile.ui.framework.version>
+        <mobile.ui.framework.version>0.5.2</mobile.ui.framework.version>
         <maven.surefire.version>2.22.1</maven.surefire.version>
         <cucumber.version>7.8.0</cucumber.version>
         <selenium.version>4.4.0</selenium.version>
