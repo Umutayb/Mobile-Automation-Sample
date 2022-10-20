@@ -46,7 +46,7 @@
     <dependencies>
         <!-- Mobileib -->
         <dependency>
-            <groupId>com.github.Umutayb</groupId>
+            <groupId>io.github.umutayb</groupId>
             <artifactId>Mobileib</artifactId>
             <version>${mobile.ui.framework.version}</version>
         </dependency>
@@ -169,13 +169,6 @@
             <version>${retrofit.version}</version>
         </dependency>
 
-        <!-- Web Driver Manager -->
-        <dependency>
-            <groupId>io.github.bonigarcia</groupId>
-            <artifactId>webdrivermanager</artifactId>
-            <version>5.3.0</version>
-        </dependency>
-
         <!-- Assert -->
         <dependency>
             <groupId>org.assertj</groupId>
@@ -201,13 +194,6 @@
             </exclusions>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
 
     <build>
         <plugins>
