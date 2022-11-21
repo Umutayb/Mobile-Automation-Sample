@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import static utils.FileUtilities.properties;
+
 @RunWith(Cucumber.class)
 @CucumberOptions(
         features = {"src/test/java/features"},
@@ -19,6 +21,8 @@ import java.nio.file.Files;
         publish = true
 )
 public class TestRunner {
+
+    static Boolean useAppium2 = Boolean.parseBoolean(properties.getProperty("use-appium2", "false"));
 
     @BeforeClass
     public static void initialSequence(){
@@ -31,12 +35,12 @@ public class TestRunner {
             catch (IOException e) {throw new RuntimeException(e);}
             if (mediaType.equals("image/jpeg")) screenshot.delete();
         }
-        Driver.startService();
+        if (useAppium2) Driver.startService();
     }
 
     @AfterClass
     public static void finalSequence(){
-        ServiceFactory.service.stop();
+        if (useAppium2) ServiceFactory.service.stop();
         String tags = System.getProperty("cucumber.filter.tags");
         if (tags != null)
             new ShutdownSequence().publishReports(System.getProperty("cucumber.filter.tags"));
