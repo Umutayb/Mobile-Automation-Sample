@@ -4,7 +4,6 @@ import io.cucumber.junit.CucumberOptions;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
-import steps.CommonSteps;
 import utils.Printer;
 import utils.appium.Driver;
 import utils.appium.ServiceFactory;
