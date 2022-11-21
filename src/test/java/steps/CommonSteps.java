@@ -10,9 +10,9 @@ import utils.MobileUtilities;
 import utils.Printer;
 import utils.ScreenCaptureUtility;
 import utils.appium.Driver;
+import utils.appium.ServiceFactory;
 
 import java.util.List;
-
 import static utils.MobileUtilities.Color.*;
 
 
@@ -20,15 +20,16 @@ public class CommonSteps extends MobileUtilities {
 
     public Scenario scenario;
 
-    Driver browser = new Driver();
+    Driver setup = new Driver();
     Printer log = new Printer(CommonSteps.class);
     ScreenCaptureUtility capture = new ScreenCaptureUtility();
 
     @Before
     public void before(Scenario scenario) {
         log.new Info("Running: " + highlighted(PURPLE, scenario.getName()));
+        if (ServiceFactory.service == null) startService();
         this.scenario = scenario;
-        browser.initialize();
+        setup.initialize();
     }
 
     @After
@@ -38,7 +39,7 @@ public class CommonSteps extends MobileUtilities {
                     scenario.getName().replaceAll(" ", "") + "@" + scenario.getLine(), driver
             );
         else log.new Success(scenario.getName() + ": PASS!");
-        browser.terminate();
+        setup.terminate();
     }
 
     @Given("Navigate to url: {}")
@@ -309,7 +310,7 @@ public class CommonSteps extends MobileUtilities {
         );
         pageName = strUtils.firstLetterDeCapped(pageName);
         WebElement element = getElementFromPage(elementName, pageName, new ObjectRepository());
-        Assert.assertTrue(elementIs(element, ElementState.DISPLAYED, System.currentTimeMillis()));
+        Assert.assertTrue(elementIs(element, ElementState.DISPLAYED));
         log.new Success("Presence of the element " + elementName + " was verified!");
     }
 
@@ -323,7 +324,7 @@ public class CommonSteps extends MobileUtilities {
         pageName = strUtils.firstLetterDeCapped(pageName);
         componentName = strUtils.firstLetterDeCapped(componentName);
         WebElement element = getElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
-        Assert.assertTrue(elementIs(element, ElementState.DISPLAYED, System.currentTimeMillis()));
+        Assert.assertTrue(elementIs(element, ElementState.DISPLAYED));
         log.new Success("Presence of the element " + elementName + " was verified!");
     }
 
@@ -338,7 +339,7 @@ public class CommonSteps extends MobileUtilities {
         );
         pageName = strUtils.firstLetterDeCapped(pageName);
         WebElement element = getElementFromPage(elementName, pageName, new ObjectRepository());
-        Assert.assertTrue(elementIs(element, ElementState.valueOf(expectedState), System.currentTimeMillis()));
+        Assert.assertTrue(elementIs(element, ElementState.valueOf(expectedState)));
         log.new Success("The element " + elementName + " was verified to be enabled!");
     }
 
@@ -355,7 +356,7 @@ public class CommonSteps extends MobileUtilities {
         pageName = strUtils.firstLetterDeCapped(pageName);
         componentName = strUtils.firstLetterDeCapped(componentName);
         WebElement element = getElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
-        Assert.assertTrue(elementIs(element, ElementState.valueOf(expectedState), System.currentTimeMillis()));
+        Assert.assertTrue(elementIs(element, ElementState.valueOf(expectedState)));
         log.new Success("The element " + elementName + " was verified to be enabled!");
     }
 
