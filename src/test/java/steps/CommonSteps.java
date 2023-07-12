@@ -2,16 +2,21 @@ package steps;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.webdriverextensions.WebComponent;
+import common.Environment;
 import common.LogUtility;
+import common.ObjectRepository;
 import context.ContextStore;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.*;
 import io.cucumber.java.en.*;
-import org.junit.Assert;
 import org.openqa.selenium.*;
 import org.openqa.selenium.html5.LocalStorage;
 import org.openqa.selenium.remote.RemoteExecuteMethod;
 import org.openqa.selenium.remote.html5.RemoteWebStorage;
+import pickleib.enums.ElementState;
+import pickleib.enums.Navigation;
+import pickleib.mobile.driver.Driver;
+import pickleib.mobile.driver.ServiceFactory;
 import pickleib.mobile.interactions.MobileInteractions;
 import pickleib.mobile.utilities.MobileUtilities;
 import pickleib.utilities.*;
@@ -22,9 +27,8 @@ import utils.*;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
-
+import static pickleib.mobile.driver.Driver.startService;
 import static utils.StringUtilities.Color.*;
-
 
 public class CommonSteps extends MobileUtilities {
 
@@ -60,28 +64,12 @@ public class CommonSteps extends MobileUtilities {
 
     @Before
     public void before(Scenario scenario){
-        log.new Info("Running: " + highlighted(PURPLE, scenario.getName()));
+        log.info("Running: " + highlighted(PURPLE, scenario.getName()));
         processScenarioTags(scenario);
-        if (initialiseBrowser) {
-            DriverFactory.DriverType driverType = getDriverType(scenario);
-            if (driverType!=null) Driver.initialize(driverType);
-            else Driver.initialize();
-        }
-        if (authenticate) {
-            CredentialModel user = new CredentialModel("Booker");
-            user.setPassword("Bookersbooks1*");
-
-            UserResponseModel userResponseModel = BookStoreAuthorisation.createUser(user);
-            ContextStore.put("contextUser", user);
-
-            ContextStore.put("userId", userResponseModel.getUserID());
-            ContextStore.put("userName", userResponseModel.getUsername());
-            ContextStore.put("password", user.getPassword());
-
-            TokenResponseModel tokenResponse = BookStoreAuthorisation.generateToken(user);
-            ContextStore.put("token", tokenResponse.getToken());
-        }
-        ObjectRepository.environment = null;
+        log.info("Running: " + highlighted(PURPLE, scenario.getName()));
+        if (ServiceFactory.service == null) startService();
+        this.scenario = scenario;
+        Driver.initialize();
     }
 
     @After
@@ -94,13 +82,14 @@ public class CommonSteps extends MobileUtilities {
                                 .filter(tag -> tag.contains("SCN-"))
                                 .collect(Collectors.joining())
                                 .replaceAll("SCN-", ""),
+                        "jpg",
                         driver
                 );
             }
             Driver.terminate();
         }
         if (scenario.isFailed()) throw new RuntimeException(scenario.getName() + ": FAILED!");
-        else log.new Success(scenario.getName() + ": PASS!");
+        else log.success(scenario.getName() + ": PASS!");
     }
 
     /**
@@ -175,7 +164,7 @@ public class CommonSteps extends MobileUtilities {
     @Given("Get email at {}")
     public void getHTML(String url) {
         url = strUtils.contextCheck(url);
-        log.new Info("Navigating to the email @" + url);
+        log.info("Navigating to the email @" + url);
         driver.get(url);
     }
 
@@ -185,15 +174,15 @@ public class CommonSteps extends MobileUtilities {
      * @param environment The environment to navigate to (acceptance, test, or dev).
      */
     @Given("^Navigate to the (acceptance|test|dev) page$")
-    public void getURL(ObjectRepository.Environment environment) {
-        String username = properties.getProperty("website-username");
-        String password = properties.getProperty("website-password");
-        String protocol = properties.getProperty("protocol", "https").toLowerCase();
-        String baseUrl = properties.getProperty(environment.getUrlKey());
+    public void getURL(Environment environment) {
+        String username = PropertyUtility.getProperty("website-username");
+        String password = PropertyUtility.getProperty("website-password");
+        String protocol = PropertyUtility.getProperty("protocol", "https").toLowerCase();
+        String baseUrl = PropertyUtility.getProperty(environment.getUrlKey());
         String url = protocol + "://" + baseUrl;
 
         if (ObjectRepository.environment == null && username != null && password != null) url = protocol + "://" + username + ":" + password + "@" + baseUrl;
-        log.new Info("Navigating to " + highlighted(BLUE, url));
+        log.info("Navigating to " + highlighted(BLUE, url));
         driver.get(url);
         ObjectRepository.environment = environment;
     }
@@ -254,7 +243,7 @@ public class CommonSteps extends MobileUtilities {
      *
      * @param direction the direction to navigate in, either "BACKWARDS" or "FORWARDS"
      */
-    @Given("^Navigate browser (BACKWARDS|FORWARDS)$")
+    @Given("^Navigate browser (BACKWARDS|FORWARDS)$") //TODO: Adapt to mobile
     public void browserNavigate(Navigation direction) {navigateBrowser(direction);}
 
     /**
@@ -263,17 +252,7 @@ public class CommonSteps extends MobileUtilities {
      * @param text the text of the button to click
      */
     @Given("Click button with {} text")
-    public void clickWithText(String text) {interact.clickButtonByText(text, true);}
-
-    /**
-     * Clicks the button with the specified CSS locator.
-     *
-     * @param text the CSS locator of the button to click
-     */
-    @Given("Click button with {} css locator")
-    public void clickWithLocator(String text) {
-        interact.clickByCssSelector(text);
-    }
+    public void clickByText(String text) {interact.clickButtonByText(text, true);}
 
     /**
      * Waits for the specified duration in seconds.
@@ -291,13 +270,13 @@ public class CommonSteps extends MobileUtilities {
      * @param direction the direction to scroll in, either "up" or "down"
      */
     @Given("^Scroll (up|down)$")
-    public void scrollTo(Direction direction){interact.scrollInDirection(direction);}
+    public void swipeTowards(Direction direction){interact.swipeInDirection(direction);}
 
     /**
      * Takes a screenshot of the current page.
      */
     @Given("Take a screenshot")
-    public void takeAScreenshot() {capture.captureScreen(scenario.getName().replaceAll(" ","_"), driver);}
+    public void takeAScreenshot() {capture.captureScreen(scenario.getName().replaceAll(" ","_"), "jpg", driver);}
 
     /**
      * Clicks the specified button on the page.
@@ -307,7 +286,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click the {} on the {}")
     public void click(String buttonName, String pageName){
-        WebElement element = acquire.elementFromPage(buttonName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(buttonName, pageName, new ObjectRepository());
         interact.clickInteraction(element, buttonName, pageName);
     }
 
@@ -320,7 +299,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Acquire the {} attribute of {} on the {}")
     public void getAttributeValue(String attributeName, String elementName, String pageName){
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.saveAttributeValue(element,attributeName,elementName,pageName);
     }
 
@@ -334,7 +313,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Acquire attribute {} from component element {} of {} component on the {}") // Use 'innerHTML' attributeName to acquire text on an element
     public void getAttributeValue(String attributeName, String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.saveAttributeValue(element,attributeName,elementName,pageName);
     }
 
@@ -346,7 +325,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Center the {} on the {}")
     public void center(String elementName, String pageName){
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.center(element, elementName, pageName);
     }
 
@@ -358,7 +337,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click towards the {} on the {}")
     public void clickTowards(String elementName, String pageName) {
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.clickTowards(element, elementName, pageName);
     }
 
@@ -371,7 +350,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click component element {} of {} component on the {}")
     public void click(String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.clickInteraction(element, elementName, pageName);
     }
 
@@ -384,7 +363,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Center component element {} of {} component on the {}")
     public void center(String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.center(element,elementName,pageName);
     }
 
@@ -397,7 +376,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click towards component element {} of {} component on the {}")
     public void clickTowards(String elementName, String componentName, String pageName) {
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.clickTowards(element, elementName, pageName);
     }
 
@@ -409,7 +388,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Perform a JS click on element {} of {} component on the {}")
     public void performJSClick(String elementName, String pageName){
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.center(element, elementName, pageName);
         interact.performJSClick(element, elementName, pageName);
     }
@@ -423,7 +402,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Perform a JS click on component element {} of {} component on the {}")
     public void performJSClick(String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.center(element, elementName, pageName);
         interact.performJSClick(element, elementName, pageName);
     }
@@ -439,12 +418,12 @@ public class CommonSteps extends MobileUtilities {
     @Given("If present, click the {} on the {}")
     public void clickIfPresent(String elementName, String pageName){
         try {
-            WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+            WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
             if (elementIs(element, ElementState.displayed)) {
                 interact.clickInteraction(element, elementName, pageName);
             }
         }
-        catch (WebDriverException ignored){log.new Warning("The " + elementName + " was not present");}
+        catch (WebDriverException ignored){log.warning("The " + elementName + " was not present");}
     }
 
     /**
@@ -459,12 +438,12 @@ public class CommonSteps extends MobileUtilities {
     @Given("If present, click component element {} of {} component on the {}")
     public void clickIfPresent(String elementName, String componentName, String pageName){
         try {
-            WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+            WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
             if (elementIs(element, ElementState.displayed)) {
                 interact.clickInteraction(element, elementName, pageName);
             }
         }
-        catch (WebDriverException ignored){log.new Warning("The " + elementName + " was not present");}
+        catch (WebDriverException ignored){log.warning("The " + elementName + " was not present");}
     }
 
     /**
@@ -478,7 +457,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click listed element {} from {} list on the {}")
     public void clickListedButton(String elementName, String listName, String pageName){
-        WebElement element = acquire.listedElementFromPage(elementName,listName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementFromPage(elementName,listName,pageName, new ObjectRepository());
         interact.clickInteraction(element, elementName, pageName);
     }
 
@@ -494,7 +473,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click listed component element {} of {} from {} list on the {}")
     public void clickListedButton(String elementName, String componentName, String listName, String pageName){
-        WebElement element = acquire.listedElementFromComponent(
+        WebElement element = acquire.acquireListedElementFromComponent(
                 elementName,
                 componentName,
                 listName,
@@ -516,7 +495,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Select component named {} from {} component list on the {} and click the {} element")
     public void clickButtonAmongstComponents(String componentName, String listName, String pageName, String elementName){
-        WebElement element = acquire.listedComponentElement(elementName, componentName, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedComponentElement(elementName, componentName, listName, pageName, new ObjectRepository());
         interact.clickInteraction(element, elementName, pageName);
     }
 
@@ -532,7 +511,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Select exact component named {} from {} component list on the {} and click the {} element")
     public void clickButtonAmongstExactNamedComponents(String componentName, String listName, String pageName, String elementName){
-        WebElement element = acquire.exactNamedListedComponentElement(elementName,
+        WebElement element = acquire.acquireExactNamedListedComponentElement(elementName,
                 componentName,
                 listName,
                 pageName,
@@ -558,7 +537,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String elementName,
             String elementListName) {
-        WebElement element = acquire.listedElementAmongstListedComponents(elementName, elementListName, componentName, componentListName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementAmongstListedComponents(elementName, elementListName, componentName, componentListName, pageName, new ObjectRepository());
         interact.clickInteraction(element, elementName, pageName);
     }
 
@@ -574,7 +553,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click listed attribute element that has {} value for its {} attribute from {} list on the {}")
     public void clickListedButtonByAttribute(String attributeValue, String attributeName, String listName, String pageName) {
-        WebElement element = acquire.listedElementByAttribute(attributeName, attributeValue, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementByAttribute(attributeName, attributeValue, listName, pageName, new ObjectRepository());
         interact.clickInteraction(element, attributeName + " attribute named element" , pageName);
     }
 
@@ -591,7 +570,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click listed attribute element of {} component that has {} value for its {} attribute from {} list on the {}")
     public void clickListedButtonByAttribute(String componentName, String attributeValue, String attributeName, String listName, String pageName) {
-        WebElement element = acquire.listedComponentElementByAttribute(componentName, attributeName, attributeValue, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedComponentElementByAttribute(componentName, attributeName, attributeValue, listName, pageName, new ObjectRepository());
         interact.clickInteraction(element, attributeName + " attribute named element" , pageName);
     }
 
@@ -607,7 +586,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Fill listed input {} from {} list on the {} with text: {}")
     public void fillListedInput(String inputName, String listName, String pageName, String input){
-        WebElement inputElement = acquire.listedElementFromPage(inputName, listName, pageName, new ObjectRepository());
+        WebElement inputElement = acquire.acquireListedElementFromPage(inputName, listName, pageName, new ObjectRepository());
         interact.basicFill(inputElement, inputName, pageName, input);
     }
 
@@ -623,7 +602,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Fill component input {} of {} component on the {} with text: {}")
     public void fill(String inputName, String componentName, String pageName, String input){
-        WebElement inputElement = acquire.elementFromComponent(inputName, componentName, pageName, new ObjectRepository());
+        WebElement inputElement = acquire.acquireElementFromComponent(inputName, componentName, pageName, new ObjectRepository());
         interact.basicFill(inputElement, inputName, pageName, input);
     }
 
@@ -637,7 +616,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Fill form input on the {}")
     public void fillForm(String pageName, DataTable table){
-        List<Bundle<WebElement, String, String>> inputBundles = acquire.elementList(table.asMaps(), pageName, new ObjectRepository());
+        List<Bundle<WebElement, String, String>> inputBundles = acquire.acquireElementList(table.asMaps(), pageName, new ObjectRepository());
         interact.fillForm(inputBundles, pageName);
     }
 
@@ -652,7 +631,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Fill component form input of {} component on the {}")
     public void fillForm(String componentName, String pageName, DataTable table){
-        List<Bundle<WebElement, String, String>> inputBundles = acquire.componentElementList(
+        List<Bundle<WebElement, String, String>> inputBundles = acquire.acquireComponentElementList(
                 table.asMaps(),
                 componentName,
                 pageName,
@@ -673,8 +652,8 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Fill iFrame element {} of {} on the {} with text: {}")
     public void fillIframeInput(String inputName, String iframeName, String pageName, String inputText){
-        WebElement iframe = acquire.elementFromPage(iframeName, pageName, new ObjectRepository());
-        WebElement element = acquire.elementFromPage(inputName, pageName, new ObjectRepository());
+        WebElement iframe = acquire.acquireElementFromPage(iframeName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(inputName, pageName, new ObjectRepository());
         interact.fillIframeInput(iframe, element, inputName, pageName, inputText);
     }
 
@@ -687,8 +666,8 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Click i-frame element {} in {} on the {}")
     public void clickIframeElement(String elementName, String iframeName,String pageName ){
-        WebElement iframe = acquire.elementFromPage(iframeName, pageName, new ObjectRepository());
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement iframe = acquire.acquireElementFromPage(iframeName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.clickIframeElement(iframe, element, elementName, iframeName, pageName);
     }
 
@@ -702,8 +681,8 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Fill iframe component form input of {} component on the {}")
     public void fillFormIframe(String iframeName, String componentName, String pageName, DataTable table){
-        List<Bundle<WebElement, String, String>> bundles = acquire.componentElementList(table.asMaps(), componentName, pageName, new ObjectRepository());
-        WebElement iFrame = acquire.elementFromPage(iframeName, pageName, new ObjectRepository());
+        List<Bundle<WebElement, String, String>> bundles = acquire.acquireComponentElementList(table.asMaps(), componentName, pageName, new ObjectRepository());
+        WebElement iFrame = acquire.acquireElementFromPage(iframeName, pageName, new ObjectRepository());
         interact.fillFormIframe(bundles, iFrame, iframeName, pageName);
     }
 
@@ -718,7 +697,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Fill listed component input {} of {} component on the {} with text: {}")
     public void fillListedInput(String inputName, String listName, String componentName, String pageName, String input){
-        WebElement element = acquire.listedComponentElement(inputName, componentName, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedComponentElement(inputName, componentName, listName, pageName, new ObjectRepository());
         interact.basicFill(element, inputName, pageName, input);
     }
 
@@ -731,16 +710,16 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Verify the text of {} on the {} to be: {}")
     public void verifyText(String elementName, String pageName, String expectedText){
-        WebElement element  = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element  = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         pageName = strUtils.firstLetterDeCapped(pageName);
         interact.verifyText(element, elementName, pageName, expectedText);
     }
 
     @Given("Verify text of element list {} on the {}") //TODO check
     public void verifyListedText(String listName, String pageName, DataTable table){
-        List<Bundle<WebElement, String, String>> signForms = acquire.elementList(table.asMaps(), pageName, new ObjectRepository());
+        List<Bundle<WebElement, String, String>> signForms = acquire.acquireElementList(table.asMaps(), pageName, new ObjectRepository());
         for (Bundle<WebElement, String, String> form: signForms) {
-            WebElement element = acquire.listedElementFromPage(form.beta(), listName, pageName, new ObjectRepository());
+            WebElement element = acquire.acquireListedElementFromPage(form.beta(), listName, pageName, new ObjectRepository());
             interact.basicFill(element, form.beta(), pageName, form.theta());
         }
 
@@ -750,7 +729,7 @@ public class CommonSteps extends MobileUtilities {
         //for (Map<String, String> form : signForms) {
         //  elementName = form.get("Input Element");
         //  expectedText = strUtils.contextCheck(form.get("Input"));
-        //  log.new Info("Performing text verification for " +
+        //  log.info();("Performing text verification for " +
         //          highlighted(BLUE, elementName) +
         //          highlighted(GRAY," on the ") +
         //          highlighted(BLUE, pageName) +
@@ -761,7 +740,7 @@ public class CommonSteps extends MobileUtilities {
         //  List<WebElement> elements = getElementsFromPage(listName, pageName, new ObjectRepository());
         //  WebElement element = acquireNamedElementAmongst(elements, elementName);
         //  Assert.assertEquals("The " + element.getText() + " does not contain text '",expectedText, element.getText());
-        //  log.new Success("Text of the element" + element.getText() + " was verified!");
+        //  log.success();("Text of the element" + element.getText() + " was verified!");
         //
         //}
     }
@@ -776,7 +755,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Verify text of the component element {} of {} on the {} to be: {}")
     public void verifyText(String elementName, String componentName, String pageName, String expectedText){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         elementIs(element, ElementState.displayed);
         interact.center(element, elementName, pageName);
         interact.verifyText(element, elementName, pageName, expectedText);
@@ -784,7 +763,7 @@ public class CommonSteps extends MobileUtilities {
 
     @Given("Verify text of component element list {} of {} on the {}") //TODO check
     public void verifyListedText(String listName,String componentName, String pageName, DataTable table){
-        List<Bundle<WebElement, String, String>> signForms = acquire.elementList(table.asMaps(), pageName, new ObjectRepository());
+        List<Bundle<WebElement, String, String>> signForms = acquire.acquireElementList(table.asMaps(), pageName, new ObjectRepository());
         interact.verifyListedText(signForms, pageName);
 
         //List<Map<String, String>> forms = table.asMaps();
@@ -793,7 +772,7 @@ public class CommonSteps extends MobileUtilities {
         //for (Map<String, String> form : forms) {
         //  elementName = form.get("Input Element");
         //  expectedText = strUtils.contextCheck(form.get("Input"));
-        //  log.new Info("Performing text verification for " +
+        //  log.info();("Performing text verification for " +
         //          highlighted(BLUE, elementName) +
         //          highlighted(GRAY," on the ") +
         //          highlighted(BLUE, pageName) +
@@ -805,7 +784,7 @@ public class CommonSteps extends MobileUtilities {
         //  List<WebElement> elements = getElementsFromComponent(listName, componentName, pageName, new ObjectRepository());
         //  WebElement element = acquireNamedElementAmongst(elements, elementName);
         //  Assert.assertEquals("The " + element.getText() + " does not contain text '",expectedText,element.getText());
-        //  log.new Success("Text of the element " + element.getText() + " was verified!");
+        //  log.success();("Text of the element " + element.getText() + " was verified!");
         //}
     }
 
@@ -817,7 +796,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Verify presence of element {} on the {}")
     public void verifyPresence(String elementName, String pageName){
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.verifyState(element, elementName, pageName, ElementState.displayed);
     }
 
@@ -830,15 +809,15 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Verify presence of the component element {} of {} on the {}")
     public void verifyPresence(String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.verifyState(element, elementName, pageName, ElementState.displayed);
     }
 
     @Given("Checking the presence of the element text on the {}") //TODO check
     public void verifyPresenceText(String pageName, DataTable table) {
-        List<Bundle<WebElement, String, String>> elements = acquire.elementList(table.asMaps(), pageName, new ObjectRepository());
+        List<Bundle<WebElement, String, String>> elements = acquire.acquireElementList(table.asMaps(), pageName, new ObjectRepository());
         for (Bundle<WebElement, String, String> element: elements) {
-            WebElement targetElement = acquire.elementFromPage(element.beta(), pageName, new ObjectRepository());
+            WebElement targetElement = acquire.acquireElementFromPage(element.beta(), pageName, new ObjectRepository());
             interact.verifyState(targetElement, element.beta(), pageName, ElementState.enabled);
 
         }
@@ -848,7 +827,7 @@ public class CommonSteps extends MobileUtilities {
         //List<Map<String, String>> signForms = table.asMaps();
         //for (Map<String, String> form : signForms) {
         //  elementText = strUtils.contextCheck(form.get("Input"));
-        //  log.new Info("Performing text verification for " +
+        //  log.info();("Performing text verification for " +
         //          highlighted(BLUE, elementText) +
         //          highlighted(GRAY, " on the ") +
         //          highlighted(BLUE, pageName)
@@ -856,7 +835,7 @@ public class CommonSteps extends MobileUtilities {
         //
         //  WebElement element = getElementContainingText(elementText);
         //  verifyElementState(element, ElementState.enabled);
-        //  log.new Success("Presence of the element text " + elementText + " was verified!");
+        //  log.success();("Presence of the element text " + elementText + " was verified!");
         //}
     }
 
@@ -877,7 +856,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Verify that element {} on the {} is in {} state")
     public void verifyState(String elementName, String pageName, ElementState expectedState){
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.verifyState(element,elementName, pageName, expectedState);
     }
 
@@ -892,7 +871,7 @@ public class CommonSteps extends MobileUtilities {
 
     @Given("Verify that component element {} of {} on the {} is in {} state")
     public void verifyState(String elementName, String componentName, String pageName, ElementState expectedState){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.verifyState(element,elementName, pageName, expectedState);
     }
 
@@ -907,10 +886,10 @@ public class CommonSteps extends MobileUtilities {
     @Given("If present, verify that component element {} of {} on the {} is in {} state")
     public void verifyIfPresentElement(String elementName, String componentName, String pageName, ElementState expectedState){
         try {
-            WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+            WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
             if (elementIs(element, ElementState.displayed)) interact.verifyState(element,elementName, pageName, expectedState);
         }
-        catch (WebDriverException ignored){log.new Warning("The " + elementName + " was not present");}
+        catch (WebDriverException ignored){log.warning("The " + elementName + " was not present");}
     }
 
     /**
@@ -921,13 +900,13 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Wait for absence of element {} on the {}")
     public void waitUntilAbsence(String elementName, String pageName){
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.waitUntilAbsence(element, elementName, pageName);
     }
 
     @Given("Wait for absence of component element {} of {} on the {}")
     public void waitUntilAbsence(String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName,pageName, new ObjectRepository());
         interact.waitUntilAbsence(element, elementName, pageName);
     }
 
@@ -939,7 +918,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Wait for element {} on the {} to be visible")
     public void waitUntilVisible(String elementName, String pageName){
-        WebElement element = acquire.elementFromPage(elementName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName,pageName, new ObjectRepository());
         interact.waitUntilVisible(element, elementName, pageName);
     }
 
@@ -952,7 +931,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Wait for component element {} of {} on the {} to be visible")
     public void waitUntilVisible(String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.waitUntilVisible(element, elementName, pageName);
     }
 
@@ -970,7 +949,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String attributeValue,
             String attributeName) {
-        WebElement element = acquire.elementFromPage(elementName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName,pageName, new ObjectRepository());
         try {interact.verifyElementContainsAttribute(element, elementName, pageName, attributeName, attributeValue);}
         catch (WebDriverException ignored) {}
     }
@@ -991,7 +970,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String attributeValue,
             String attributeName) {
-        WebElement element = acquire.elementFromComponent(elementName, componentName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName,pageName, new ObjectRepository());
         try {interact.verifyElementContainsAttribute(element, elementName, pageName, attributeName, attributeValue);}
         catch (WebDriverException ignored) {}
     }
@@ -1010,7 +989,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String attributeValue,
             String attributeName) {
-        WebElement element = acquire.elementFromPage(elementName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName,pageName, new ObjectRepository());
         interact.verifyElementContainsAttribute(element, elementName, pageName, attributeName, attributeValue);
     }
 
@@ -1028,7 +1007,7 @@ public class CommonSteps extends MobileUtilities {
             String elementName,
             String pageName,
             String attributeValue) {
-        WebElement element = acquire.elementFromPage(elementName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName,pageName, new ObjectRepository());
         interact.verifyElementColor(element, attributeName, elementName, pageName, attributeValue);
     }
 
@@ -1048,7 +1027,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String attributeValue,
             String attributeName) {
-        WebElement element = acquire.elementFromComponent(elementName, componentName,pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName,pageName, new ObjectRepository());
         interact.verifyElementContainsAttribute(element, elementName ,pageName, attributeName, attributeValue);
     }
 
@@ -1070,7 +1049,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String attributeValue,
             String attributeName) {
-        WebComponent component = acquire.exactNamedListedComponent(
+        WebComponent component = acquire.acquireExactNamedListedComponent(
                 elementFieldName,
                 elementText,
                 componentListName,
@@ -1096,7 +1075,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String attributeValue,
             String attributeName) {
-        WebElement element = acquire.listedElementFromPage(elementName, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementFromPage(elementName, listName, pageName, new ObjectRepository());
         interact.verifyElementContainsAttribute(element, elementName, pageName, attributeName, attributeValue);
     }
 
@@ -1114,34 +1093,8 @@ public class CommonSteps extends MobileUtilities {
             String listName,
             String pageName,
             String expectedText) {
-        WebElement element = acquire.listedElementFromPage(elementName, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementFromPage(elementName, listName, pageName, new ObjectRepository());
         interact.verifyContainsText(element, elementName, pageName, expectedText);
-    }
-
-    @Given("Verify text of listed element from the {} on the {}") //TODO: fix this step
-    public void verifyListedElementContainsText(String listName, String pageName, DataTable table){
-        List<Map<String, String>> signForms = table.asMaps();
-        String elementName;
-        String expectedText;
-        for (Map<String, String> form : signForms) {
-            elementName = form.get("Input Element");
-            expectedText = strUtils.contextCheck(form.get("Input"));
-            pageName = strUtils.firstLetterDeCapped(pageName);
-            List<WebElement> elements = getElementsFromPage(listName, pageName, new ObjectRepository());
-            WebElement element = acquireNamedElementAmongst(elements, elementName);
-            log.new Info("Performing text verification for " +
-                    highlighted(BLUE, elementName) +
-                    highlighted(GRAY," on the ") +
-                    highlighted(BLUE, pageName) +
-                    highlighted(GRAY, " with the text: ") +
-                    highlighted(BLUE, expectedText)
-            );
-            Assert.assertTrue(
-                    "The " + elementName + " does not contain text '" + expectedText + "' ",
-                    element.getText().contains(expectedText)
-            );
-            log.new Success("Text of '" + elementName + "' verified as '" + expectedText + "'!");
-        }
     }
 
     /**
@@ -1160,36 +1113,10 @@ public class CommonSteps extends MobileUtilities {
             String componentName,
             String pageName,
             String expectedText) {
-        WebElement element = acquire.listedElementFromComponent(elementName, componentName, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementFromComponent(elementName, componentName, listName, pageName, new ObjectRepository());
         interact.verifyContainsText(element, elementName, pageName, expectedText);
     }
 
-    @Given("Verify text of listed component element from the {} of {} on the {}") //TODO check
-    public void verifyListedComponentElementContainsText(String listName, String componentName, String pageName, DataTable table){
-        List<Map<String, String>> signForms = table.asMaps();
-        String elementName;
-        String expectedText;
-        for (Map<String, String> form : signForms) {
-            elementName = form.get("Input Element");
-            expectedText = strUtils.contextCheck(form.get("Input"));
-            pageName = strUtils.firstLetterDeCapped(pageName);
-            componentName = strUtils.firstLetterDeCapped(componentName);
-            List<WebElement> elements = getElementsFromComponent(listName, componentName, pageName, new ObjectRepository());
-            WebElement element = acquireNamedElementAmongst(elements, elementName);
-            log.new Info("Performing text verification for " +
-                    highlighted(BLUE, elementName) +
-                    highlighted(GRAY, " on the ") +
-                    highlighted(BLUE, pageName) +
-                    highlighted(GRAY, " with the text: ") +
-                    highlighted(BLUE, expectedText)
-            );
-            Assert.assertTrue(
-                    "The " + elementName + " does not contain text '" + expectedText + "' ",
-                    element.getText().contains(expectedText)
-            );
-            log.new Success("Text of '" + elementName + "' verified as '" + expectedText + "'!");
-        }
-    }
 
     /**
      * Verifies if a component element in a list contains a specified text.
@@ -1201,7 +1128,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Verify presence of listed component element {} of {} from {} list on the {}")
     public void verifyListedComponentElementContainsText(String elementText, String listName, String componentName, String pageName){
-        WebElement element = acquire.listedElementFromComponent(elementText, componentName, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementFromComponent(elementText, componentName, listName, pageName, new ObjectRepository());
         interact.verifyPresence(element, elementText, pageName);
     }
 
@@ -1223,7 +1150,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             String attributeValue,
             String attributeName) {
-        WebElement element = acquire.listedElementFromComponent(elementName, componentName, listName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireListedElementFromComponent(elementName, componentName, listName, pageName, new ObjectRepository());
         interact.verifyElementContainsAttribute(element, elementName, pageName, attributeName, attributeValue);
     }
 
@@ -1277,7 +1204,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Clear input field {} on the {}")
     public void clearInputField(String elementName, String pageName){
-        WebElement element =  acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element =  acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         element.clear(); // TODO Inner clear() method may be needed
     }
 
@@ -1290,7 +1217,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Clear component input field {} from {} component on the {}")
     public void clearInputField(String elementName, String componentName, String pageName){
-        WebElement element =  acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element =  acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         element.clear();
     }
 
@@ -1303,7 +1230,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Press {} key on {} element of the {}")
     public void pressKey(Keys key, String elementName, String pageName){
-        WebElement element = acquire.elementFromPage(elementName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromPage(elementName, pageName, new ObjectRepository());
         interact.pressKey(element, key, elementName, pageName);
     }
 
@@ -1317,7 +1244,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Press {} key on component element {} from {} component on the {}")
     public void pressKey(Keys key, String elementName, String componentName, String pageName){
-        WebElement element = acquire.elementFromComponent(elementName, componentName, pageName, new ObjectRepository());
+        WebElement element = acquire.acquireElementFromComponent(elementName, componentName, pageName, new ObjectRepository());
         interact.pressKey(element, key, elementName, pageName);
     }
 
@@ -1344,7 +1271,7 @@ public class CommonSteps extends MobileUtilities {
     }
     @Given("Listen to {} event & verify value of {} node is {}")
     public void listenGetAndVerifyObjectStep(String eventName, String nodeSource, String expectedValue)  {
-        log.new Info("Verifying value of '" + nodeSource + "' node");
+        log.info("Verifying value of '" + nodeSource + "' node");
         String listenerScript = "_ddm.listen(" + eventName + ");";
         interact.listenGetAndVerifyObject(listenerScript, eventName, nodeSource, expectedValue);
     }
@@ -1359,7 +1286,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Upload file on component input {} of {} component on the {} with file: {}")
     public void fillInputWithFile(String inputName, String componentName, String pageName, String path){
-        WebElement inputElement = acquire.elementFromComponent(inputName, componentName, pageName, new ObjectRepository());
+        WebElement inputElement = acquire.acquireElementFromComponent(inputName, componentName, pageName, new ObjectRepository());
         interact.fillInputWithFile(inputElement, inputName, pageName, path);
     }
 
@@ -1385,9 +1312,9 @@ public class CommonSteps extends MobileUtilities {
     @Given("Perform text replacement on {} context by replacing {} value in {}")
     public void replaceAttributeValue(String attributeText, String splitValue, String attributeName){
         attributeText = strUtils.contextCheck(attributeText);
-        log.new Info("Acquiring " + highlighted(BLUE,attributeText));
+        log.info("Acquiring " + highlighted(BLUE,attributeText));
         ContextStore.put(attributeName, attributeText.replace(splitValue,""));
-        log.new Info(String.valueOf(ContextStore.get(attributeName)));
+        log.info(String.valueOf(ContextStore.get(attributeName)));
     }
 
     /**
@@ -1421,7 +1348,7 @@ public class CommonSteps extends MobileUtilities {
      */
     @Given("Interact with element on the {}")
     public void pageElementInteraction(String pageName, DataTable specifications){
-        List<Bundle<String, WebElement, Map<String, String>>> bundles = acquire.elementBundlesFromPage(
+        List<Bundle<String, WebElement, Map<String, String>>> bundles = acquire.acquireElementBundlesFromPage(
                 pageName,
                 specifications.asMaps(),
                 new ObjectRepository()
@@ -1442,7 +1369,7 @@ public class CommonSteps extends MobileUtilities {
             String pageName,
             DataTable specifications
     ){
-        List<Bundle<String, WebElement, Map<String, String>>> bundles = acquire.elementBundlesFromComponent(
+        List<Bundle<String, WebElement, Map<String, String>>> bundles = acquire.acquireElementBundlesFromComponent(
                 componentFieldName,
                 pageName,
                 specifications.asMaps(),
