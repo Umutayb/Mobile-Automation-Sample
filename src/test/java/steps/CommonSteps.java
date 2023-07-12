@@ -23,12 +23,15 @@ import pickleib.utilities.*;
 import pickleib.utilities.email.EmailAcquisition;
 import pickleib.utilities.email.EmailInbox;
 import records.Bundle;
-import utils.*;
+import utils.EmailUtilities;
+import utils.PropertyUtility;
+
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 import static pickleib.mobile.driver.Driver.startService;
-import static utils.StringUtilities.Color.*;
+import static utils.StringUtilities.Color.BLUE;
+import static utils.StringUtilities.Color.PURPLE;
 
 public class CommonSteps extends MobileUtilities {
 
@@ -43,9 +46,9 @@ public class CommonSteps extends MobileUtilities {
     ElementAcquisition.PageObjectModel acquire = new ElementAcquisition.PageObjectModel();
 
     public CommonSteps(){
-        PropertyUtility.loadProperties("src/test/resources/test.properties");
         logUtil.setLogLevel(logUtil.getLogLevel(PropertyUtility.getProperty("system-log-level", "error")));
     }
+
 
     @SuppressWarnings("unused")
     @DefaultParameterTransformer
@@ -60,36 +63,6 @@ public class CommonSteps extends MobileUtilities {
         this.scenario = scenario;
         authenticate = scenario.getSourceTagNames().contains("@Authenticate");
         initialiseBrowser = scenario.getSourceTagNames().contains("@Web-UI");
-    }
-
-    @Before
-    public void before(Scenario scenario){
-        log.info("Running: " + highlighted(PURPLE, scenario.getName()));
-        processScenarioTags(scenario);
-        log.info("Running: " + highlighted(PURPLE, scenario.getName()));
-        if (ServiceFactory.service == null) startService();
-        this.scenario = scenario;
-        Driver.initialize();
-    }
-
-    @After
-    public void kill(Scenario scenario) {
-        if (initialiseBrowser) {
-            if (scenario.isFailed()) {
-                capture.captureScreen(
-                        scenario.getSourceTagNames()
-                                .stream()
-                                .filter(tag -> tag.contains("SCN-"))
-                                .collect(Collectors.joining())
-                                .replaceAll("SCN-", ""),
-                        "jpg",
-                        driver
-                );
-            }
-            Driver.terminate();
-        }
-        if (scenario.isFailed()) throw new RuntimeException(scenario.getName() + ": FAILED!");
-        else log.success(scenario.getName() + ": PASS!");
     }
 
     /**
@@ -591,6 +564,21 @@ public class CommonSteps extends MobileUtilities {
     }
 
     /**
+     * Fills in the specified input field on the page with the given text.
+     *
+     * @param inputName the name of the input field to fill in
+     * @param pageName the name of the page containing the component
+     * @param input the text to fill in the input field
+     *
+     * @throws WebDriverException if the input field cannot be found or filled
+     */
+    @Given("Fill the {} on the {} with text: {}")
+    public void fillElementInput(String inputName, String pageName, String input){
+        WebElement inputElement = acquire.acquireElementFromPage(inputName, pageName, new ObjectRepository());
+        interact.basicFill(inputElement, inputName, pageName, input);
+    }
+
+    /**
      * Fills in the specified input field of a component on the page with the given text.
      *
      * @param inputName the name of the input field to fill in
@@ -601,7 +589,7 @@ public class CommonSteps extends MobileUtilities {
      * @throws WebDriverException if the input field cannot be found or filled
      */
     @Given("Fill component input {} of {} component on the {} with text: {}")
-    public void fill(String inputName, String componentName, String pageName, String input){
+    public void fillComponentInput(String inputName, String componentName, String pageName, String input){
         WebElement inputElement = acquire.acquireElementFromComponent(inputName, componentName, pageName, new ObjectRepository());
         interact.basicFill(inputElement, inputName, pageName, input);
     }
@@ -617,26 +605,6 @@ public class CommonSteps extends MobileUtilities {
     @Given("Fill form input on the {}")
     public void fillForm(String pageName, DataTable table){
         List<Bundle<WebElement, String, String>> inputBundles = acquire.acquireElementList(table.asMaps(), pageName, new ObjectRepository());
-        interact.fillForm(inputBundles, pageName);
-    }
-
-    /**
-     * Fills in a form within a component on the page with the given input values.
-     *
-     * @param componentName the name of the component containing the form
-     * @param pageName the name of the page containing the component
-     * @param table a DataTable containing the input values and corresponding element names
-     *
-     * @throws WebDriverException if any input fields cannot be found or filled
-     */
-    @Given("Fill component form input of {} component on the {}")
-    public void fillForm(String componentName, String pageName, DataTable table){
-        List<Bundle<WebElement, String, String>> inputBundles = acquire.acquireComponentElementList(
-                table.asMaps(),
-                componentName,
-                pageName,
-                new ObjectRepository()
-        );
         interact.fillForm(inputBundles, pageName);
     }
 

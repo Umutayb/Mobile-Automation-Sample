@@ -1,5 +1,7 @@
 package slack;
 
+import api_assured.Caller;
+import api_assured.ServiceGenerator;
 import models.slack.SimpleMessageModel;
 import models.slack.SuccessfulMessage;
 import models.slack.ThreadMessageModel;
@@ -8,17 +10,16 @@ import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 import retrofit2.Call;
-import utils.Caller;
-import utils.ServiceGenerator;
+import utils.PropertyUtility;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import static utils.FileUtilities.properties;
 
 public class Slack extends Caller {
 
     SlackServices slackServices = new ServiceGenerator(new Headers.Builder()
-            .add("Authorization",  properties.getProperty("slack-token"))
+            .add("Authorization",  PropertyUtility.getProperty("slack-token"))
             .build())
             .generate(SlackServices.class);
 
@@ -26,14 +27,14 @@ public class Slack extends Caller {
         Call<SuccessfulMessage> messageCall = slackServices.postMessage(
                 new SimpleMessageModel(channelId, "mrkdwn", message)
         );
-        return perform(messageCall, false, false, "postSimpleMessage");
+        return perform(messageCall, false, false);
     }
 
     public Object postThreadMessage(String message, String channelId, String threadTs){
         Call<Object> messageCall = slackServices.postThreadMessage(
                 new ThreadMessageModel(channelId, "mrkdwn", message, threadTs)
         );
-        return perform(messageCall, false, false, "postThreadMessage");
+        return perform(messageCall, false, false);
     }
 
     public Object postMultipartThreadMessage(File file, String comments, String channelId, String threadTs){
@@ -48,7 +49,7 @@ public class Slack extends Caller {
                 RequestBody.create(channelId, MediaType.parse("text/plain")),
                 RequestBody.create(threadTs, MediaType.parse("text/plain"))
         );
-        return perform(postFile, true, false, "postMultipartThreadMessage");
+        return perform(postFile, true, false);
     }
 
     public Object postMultipartMessage(File file, String comments, String channelId){
@@ -62,6 +63,6 @@ public class Slack extends Caller {
                 RequestBody.create(comments, MediaType.parse("text/plain")),
                 RequestBody.create(channelId, MediaType.parse("text/plain"))
         );
-        return perform(postFile, true, false, "postMultipartThreadMessage");
+        return perform(postFile, true, false);
     }
 }

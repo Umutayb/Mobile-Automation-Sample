@@ -1,15 +1,10 @@
 package screens;
 
-import io.appium.java_client.AppiumBy;
-import io.appium.java_client.pagefactory.AndroidBy;
 import io.appium.java_client.pagefactory.AndroidFindBy;
-import io.appium.java_client.pagefactory.iOSBy;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+import pickleib.mobile.utilities.MobileUtilities;
 
-import org.openqa.selenium.support.How;
-import utils.MobileUtilities;
-import utils.Printer;
 
 import java.util.List;
 
