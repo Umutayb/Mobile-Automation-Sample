@@ -6,28 +6,3 @@ Feature: BBC test automation scenarios
   Scenario: Universal Step
     A Scenario where universal step interactions are tested
     * Wait 5 seconds
-
-  @Universal
-  Scenario: Universal Step
-    A Scenario where universal step interactions are tested
-    * Wait 5 seconds
-
-  @Universal
-  Scenario: Universal Step
-    A Scenario where universal step interactions are tested
-    * Wait 5 seconds
-
-  @Universal
-  Scenario: Universal Step
-    A Scenario where universal step interactions are tested
-    * Wait 5 seconds
-
-  @Universal
-  Scenario: Universal Step
-    A Scenario where universal step interactions are tested
-    * Wait 5 seconds
-
-  @Universal
-  Scenario: Universal Step
-    A Scenario where universal step interactions are tested
-    * Wait 5 seconds

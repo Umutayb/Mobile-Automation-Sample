@@ -31,7 +31,7 @@ compatible with page object model design. The infrastructure allows easy initial
 within a constructor inside the **Utilities** class. In order to initialize elements inside a page class, all it takes is
 to extend the **Utilities** class. This also extends the **Driver** class, allowing usage of driver inside page classes.
 
-#### Step 1: Create a pages package
+#### Step 1: Create a screens package
 >Create page classes, add elements (use @FindBy annotation) & page methods. _**Remember** extending **Utilities** class,
 > initializing all elements within the page class._
 >````java

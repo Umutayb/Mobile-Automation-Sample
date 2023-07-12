@@ -13,10 +13,10 @@
     <properties>
         <device>Pixim</device>
         <name>${project.name}</name>
-        <mobile.ui.framework.version>0.5.6</mobile.ui.framework.version>
+        <test.framework.version>1.7.8-SNAPSHOT</test.framework.version>
         <maven.surefire.version>2.22.1</maven.surefire.version>
-        <cucumber.version>7.8.0</cucumber.version>
-        <selenium.version>4.4.0</selenium.version>
+        <cucumber.version>7.11.1</cucumber.version>
+        <selenium.version>4.8.1</selenium.version>
         <retrofit.version>2.9.0</retrofit.version>
         <okhttp.version>4.9.3</okhttp.version>
     </properties>
@@ -44,11 +44,11 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Mobileib -->
+        <!-- Pickleib -->
         <dependency>
             <groupId>io.github.umutayb</groupId>
-            <artifactId>Mobileib</artifactId>
-            <version>${mobile.ui.framework.version}</version>
+            <artifactId>Pickleib</artifactId>
+            <version>${test.framework.version}</version>
         </dependency>
 
         <!-- Cucumber -->
@@ -78,23 +78,19 @@
             <version>3.0.0</version>
         </dependency>
 
-        <!-- Selenium -->
+        <!-- Appium -->
         <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-java</artifactId>
-            <version>${selenium.version}</version>
+            <groupId>io.appium</groupId>
+            <artifactId>java-client</artifactId>
+            <version>8.3.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-api</artifactId>
-            <version>${selenium.version}</version>
-        </dependency>
+
 
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>1.18.26</version>
         </dependency>
 
         <!-- Commons -->
@@ -177,21 +173,12 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Web Driver Extensions -->
+        <!-- Logback -->
         <dependency>
-            <groupId>com.github.webdriverextensions</groupId>
-            <artifactId>webdriverextensions</artifactId>
-            <version>3.11.2</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>ch.qos.logback</groupId>
-                    <artifactId>logback-classic</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.4.6</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

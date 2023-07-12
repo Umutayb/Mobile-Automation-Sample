@@ -1,0 +1,7 @@
+{
+  "platformName": "Android",
+  "platformVersion": "11",
+  "deviceName": "Pixim",
+  "automationName": "uiautomator2",
+  "app": "/Users/Ay/Github/Mobile-Automation-Sample/src/test/resources/apps/trendyol.apk"
+}
