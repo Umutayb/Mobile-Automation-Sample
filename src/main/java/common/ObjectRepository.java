@@ -1,6 +1,6 @@
 package common;
 
-import screens.MainScreen;
+import screens.*;
 
 @SuppressWarnings("unused")
 public class ObjectRepository {

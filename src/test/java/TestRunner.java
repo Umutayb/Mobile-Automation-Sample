@@ -1,4 +1,5 @@
 
+import common.LogUtility;
 import io.cucumber.junit.Cucumber;
 import io.cucumber.junit.CucumberOptions;
 import org.junit.AfterClass;
@@ -17,7 +18,6 @@ import utils.PropertyUtility;
         publish = true
 )
 public class TestRunner {
-
 
     static Boolean useAppium2 = Boolean.parseBoolean(PropertyUtility.getProperty("use-appium2", "false"));
 

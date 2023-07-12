@@ -130,7 +130,7 @@ public class CommonSteps extends MobileUtilities {
 
     /**
      * Navigates to the specified email path.
-     * Email at a given path is treated like a web page and the driver navigates to it, enabling various interactions.
+     * Email at a given path is treated like a web page, and the driver navigates to it, enabling various interactions.
      *
      * @param url The URL of the email to navigate to.
      */

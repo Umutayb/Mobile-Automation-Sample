@@ -1,5 +1,6 @@
 package steps;
 
+import common.LogUtility;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Scenario;
@@ -21,23 +22,26 @@ public class Hooks {
 
     public Scenario scenario;
 
-    public Driver driver = new Driver();
+
+    static LogUtility logUtil = new LogUtility();
 
     public Hooks() {
         PropertyUtility.loadProperties("src/test/resources/test.properties");
     }
+
     @Before
     public void before(Scenario scenario) {
-        log.new Info("Running: " + strUtils.highlighted(StringUtilities.Color.BLUE, scenario.getName()));
+        logUtil.setLogLevel(logUtil.getLogLevel(PropertyUtility.getProperty("system-log-level", "error")));
+        log.info("Running: " + strUtils.highlighted(StringUtilities.Color.BLUE, scenario.getName()));
         if (ServiceFactory.service == null) startService();
         this.scenario = scenario;
-        driver.initialize();
+        Driver.initialize();
     }
 
     @After
     public void kill(Scenario scenario) {
-        if (scenario.isFailed()) log.new Warning(scenario.getName() + ": FAILED!");
-        else log.new Success(scenario.getName() + ": PASS!");
-        driver.terminate();
+        if (scenario.isFailed()) log.warning(scenario.getName() + ": FAILED!");
+        else log.success(scenario.getName() + ": PASS!");
+        Driver.terminate();
     }
 }
